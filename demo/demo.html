@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<title>Mention.js Test</title>
+
+	<link rel="stylesheet" type="text/css" href="../recommended-styles.css">
+
+    <script src="../jquery-1.7.2.min.js"></script>
+    <script src="//cdn.tinymce.com/4/tinymce.min.js"></script>
+    <script src="../mention-tiny-plugin.js"></script>
+
+	<style type='text/css'>
+        .vanilla{
+            width: 100%;
+        }
+
+        .vanilla textarea{
+            width: 80%;
+            height: 450px;;
+        }
+
+        input{
+            width: 350px;
+        }
+
+        .vt-dropdown{
+            z-index: 1000;
+            float: left;
+            min-width: 160px;
+            padding: 5px 0;
+            margin: 5px 0 0 7px;
+            list-style: none;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border: 1px solid rgba(0,0,0,0.2);
+            -webkit-border-radius: 6px;
+            -moz-border-radius: 6px;
+            border-radius: 6px;
+            -webkit-box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+            -moz-box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+            -webkit-background-clip: padding-box;
+            -moz-background-clip: padding;
+            background-clip: padding-box;
+            font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+            font-size: 14px;
+        }
+
+        .vt-dropdown:before {
+            content: '';
+            display: inline-block;
+            border-left: 7px solid transparent;
+            border-right: 7px solid transparent;
+            border-bottom: 7px solid #ccc;
+            border-bottom-color: rgba(0, 0, 0, 0.2);
+            position: absolute;
+            top: -7px;
+            left: 9px;
+        }
+
+        .vt-dropdown:after {
+            content: '';
+            display: inline-block;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 6px solid white;
+            position: absolute;
+            top: -6px;
+            left: 10px;
+        }
+
+        .vt-dropdown > li.loading {
+            background: url("http://www.ajaxload.info/cache/FF/FF/FF/00/00/00/1-0.gif") center no-repeat;
+            height: 16px;
+        }
+
+        .vt-dropdown > li > a {
+            display: block;
+            padding: 3px 20px;
+            clear: both;
+            font-weight: normal;
+            line-height: 20px;
+            color: #333;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+
+        .vt-dropdown > li > a {
+            display: block;
+            padding: 3px 20px;
+            clear: both;
+            font-weight: normal;
+            line-height: 20px;
+            color: #333;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+
+        .vt-dropdown >li > a:hover, .vt-dropdown > li > a:focus, .vt-dropdown:hover > a, .vt-dropdown:focus > a {
+            color: #fff;
+            text-decoration: none;
+            background-color: #0081c2;
+            background-image: -moz-linear-gradient(top,#08c,#0077b3);
+            background-image: -webkit-gradient(linear,0 0,0 100%,from(#08c),to(#0077b3));
+            background-image: -webkit-linear-gradient(top,#08c,#0077b3);
+            background-image: -o-linear-gradient(top,#08c,#0077b3);
+            background-image: linear-gradient(to bottom,#08c,#0077b3);
+            background-repeat: repeat-x;
+            filter: progid:DXImageTransform.Microsoft;
+        }
+
+        .vt-dropdown >.active > a, .vt-dropdown > .active > a:hover, .vt-dropdown > .active > a:focus {
+            color: #fff;
+            text-decoration: none;
+            background-color: #0081c2;
+            background-image: -moz-linear-gradient(top,#08c,#0077b3);
+            background-image: -webkit-gradient(linear,0 0,0 100%,from(#08c),to(#0077b3));
+            background-image: -webkit-linear-gradient(top,#08c,#0077b3);
+            background-image: -o-linear-gradient(top,#08c,#0077b3);
+            background-image: linear-gradient(to bottom,#08c,#0077b3);
+            background-repeat: repeat-x;
+            outline: 0;
+            filter: progid:DXImageTransform.Microsoft;
+        }
+
+        .rte-autocomplete{
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            display: block;
+            z-index: 1000;
+            float: left;
+            min-width: 160px;
+            padding: 5px 0;
+            margin: 2px 0 0;
+            list-style: none;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border: 1px solid rgba(0,0,0,0.2);
+            -webkit-border-radius: 6px;
+            -moz-border-radius: 6px;
+            border-radius: 6px;
+            -webkit-box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+            -moz-box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+            -webkit-background-clip: padding-box;
+            -moz-background-clip: padding;
+            background-clip: padding-box;
+            font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+            font-size: 14px;
+        }
+
+        .rte-autocomplete:before {
+            content: '';
+            display: inline-block;
+            border-left: 7px solid transparent;
+            border-right: 7px solid transparent;
+            border-bottom: 7px solid #ccc;
+            border-bottom-color: rgba(0, 0, 0, 0.2);
+            position: absolute;
+            top: -7px;
+            left: 9px;
+        }
+
+        .rte-autocomplete:after {
+            content: '';
+            display: inline-block;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 6px solid white;
+            position: absolute;
+            top: -6px;
+            left: 10px;
+        }
+
+        .rte-autocomplete > li.loading {
+            background: url("http://www.ajaxload.info/cache/FF/FF/FF/00/00/00/1-0.gif") center no-repeat;
+            height: 16px;
+        }
+
+        .rte-autocomplete > li > a {
+            display: block;
+            padding: 3px 20px;
+            clear: both;
+            font-weight: normal;
+            line-height: 20px;
+            color: #333;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+
+        .rte-autocomplete >li > a:hover, .rte-autocomplete > li > a:focus, .rte-autocomplete:hover > a, .rte-autocomplete:focus > a {
+            color: #fff;
+            text-decoration: none;
+            background-color: #0081c2;
+            background-image: -moz-linear-gradient(top,#08c,#0077b3);
+            background-image: -webkit-gradient(linear,0 0,0 100%,from(#08c),to(#0077b3));
+            background-image: -webkit-linear-gradient(top,#08c,#0077b3);
+            background-image: -o-linear-gradient(top,#08c,#0077b3);
+            background-image: linear-gradient(to bottom,#08c,#0077b3);
+            background-repeat: repeat-x;
+            filter: progid:DXImageTransform.Microsoft;
+        }
+
+        .rte-autocomplete >.active > a, .rte-autocomplete > .active > a:hover, .rte-autocomplete > .active > a:focus {
+            color: #fff;
+            text-decoration: none;
+            background-color: #0081c2;
+            background-image: -moz-linear-gradient(top,#08c,#0077b3);
+            background-image: -webkit-gradient(linear,0 0,0 100%,from(#08c),to(#0077b3));
+            background-image: -webkit-linear-gradient(top,#08c,#0077b3);
+            background-image: -o-linear-gradient(top,#08c,#0077b3);
+            background-image: linear-gradient(to bottom,#08c,#0077b3);
+            background-repeat: repeat-x;
+            outline: 0;
+            filter: progid:DXImageTransform.Microsoft;
+        }
+	</style>
+</head>
+<body>
+	<hr />
+
+    <div>
+        <input id="subject" class="subject">
+    </div>
+
+    <br /><br /><br /><br /><br />
+
+    <div class="vanilla">
+        <textarea id="vanilla"></textarea>
+    </div>
+
+    <script type='text/javascript' src="../vanilla-typeahead.js"></script>
+	<script type="text/javascript">
+
+        tinyMCE.init({
+            selector:'textarea',
+            plugins : 'mention',
+            mentions: {
+                delimiter: '<<',
+                insert: function(item) {
+                    return '<span>&lt;' + item.name + '&gt;&gt;</span>';
+                },
+                source: [
+                    { name: 'Today\'s Date' }                                     ,
+                    { name: 'Current Month' }                                    ,
+                    { name: 'Previous Month' }                                   ,
+                    { name: 'Current Year' }                                     ,
+                    { name: 'Year Of Previous Month' }                           ,
+                    { name: 'Customer ABN' }                                     ,
+                    { name: 'First Name' }                                       ,
+                    { name: 'Last Name' }                                        ,
+                    { name: 'Customer Business Name' }                           ,
+                    { name: 'Customer ID' }                                      ,
+                    { name: 'Pay Now' }                                          ,
+                    { name: 'Phone Number 1' }                                   ,
+                    { name: 'Phone Number 2' }                                   ,
+                    { name: 'Phone Number 3' }                                   ,
+                    { name: 'Website' }                                          ,
+                    { name: 'Fax' }                                              ,
+                    { name: 'Bill To Address' }                                  ,
+                    { name: 'Email' }                                            ,
+                    { name: 'Credit Hold Status' }                               ,
+                    { name: 'Credit Terms' }                                     ,
+                    { name: 'Total Amount Due' }                                 ,
+                    { name: 'Total Amount OverDue' }                             ,
+                    { name: 'Oldest Overdue Invoice Amount Owing' }              ,
+                    { name: 'Oldest Overdue Invoice Amount' }                    ,
+                    { name: 'Oldest Overdue Invoice Date' }                      ,
+                    { name: 'Oldest Overdue Invoice Number' }                    ,
+                    { name: 'Oldest Overdue Invoice Numbers of Days Overdue' }   ,
+                    { name: 'Overdue Invoice Table' }                            ,
+                    { name: 'Current invoices' }                                 ,
+                    { name: 'Paid Invoice Table' }                               ,
+                    { name: 'company email address' }                            ,
+                    { name: 'Business Address' }                                 ,
+                    { name: 'Logo' }                                             ,
+                    { name: 'Phone Number' }                                     ,
+                    { name: 'Organisation ABN' }                                 ,
+                    { name: 'Organisation ACN' }                                 ,
+                    { name: 'Organisation Fax' }                                 ,
+                    { name: 'Organisation Website' }                             ,
+                    { name: 'Organisation Business Name' }                       ,
+                    { name: 'Organisation Postal Address' }                      ,
+                    { name: 'Credit Card Payment Details' }                      ,
+                    { name: 'Electronic Funds Transfer Details' }                ,
+                    { name: 'Email details for remittance advice' }
+
+                ]
+            }
+        });
+
+        var subject = document.getElementById('subject');
+        new VanillaMention(subject, {
+            source: [
+                { name: 'Today\'s Date', username: 'Today\'s Date'}                                                                            ,
+                { name: 'Current Month', username: 'Current Month'}                                                                            ,
+                { name: 'Previous Month', username: 'Previous Month'}                                                                          ,
+                { name: 'Current Year', username: 'Current Year'}                                                                              ,
+                { name: 'Year Of Previous Month', username: 'Year Of Previous Month'}                                                          ,
+                { name: 'Customer ABN', username: 'Customer ABN'}                                                                              ,
+                { name: 'First Name', username: 'First Name'}                                                                                  ,
+                { name: 'Last Name', username: 'Last Name'}                                                                                    ,
+                { name: 'Customer Business Name', username: 'Customer Business Name'}                                                          ,
+                { name: 'Customer ID', username: 'Customer ID'}                                                                                ,
+                { name: 'Pay Now', username: 'Pay Now'}                                                                                        ,
+                { name: 'Phone Number 1', username: 'Phone Number 1'}                                                                          ,
+                { name: 'Phone Number 2', username: 'Phone Number 2'}                                                                          ,
+                { name: 'Phone Number 3', username: 'Phone Number 3'}                                                                          ,
+                { name: 'Website', username: 'Website'}                                                                                        ,
+                { name: 'Fax', username: 'Fax'}                                                                                                ,
+                { name: 'Bill To Address', username: 'Bill To Address'}                                                                        ,
+                { name: 'Email', username: 'Email'}                                                                                            ,
+                { name: 'Credit Hold Status', username: 'Credit Hold Status'}                                                                  ,
+                { name: 'Credit Terms', username: 'Credit Terms'}                                                                              ,
+                { name: 'Total Amount Due', username: 'Total Amount Due'}                                                                      ,
+                { name: 'Total Amount OverDue', username: 'Total Amount OverDue'}                                                              ,
+                { name: 'Oldest Overdue Invoice Amount Owing', username: 'Oldest Overdue Invoice Amount Owing'}                                ,
+                { name: 'Oldest Overdue Invoice Amount', username: 'Oldest Overdue Invoice Amount'}                                            ,
+                { name: 'Oldest Overdue Invoice Date', username: 'Oldest Overdue Invoice Date'}                                                ,
+                { name: 'Oldest Overdue Invoice Number', username: 'Oldest Overdue Invoice Number'}                                            ,
+                { name: 'Oldest Overdue Invoice Numbers of Days Overdue', username: 'Oldest Overdue Invoice Numbers of Days Overdue'}          ,
+//                { name: 'Overdue Invoice Table', username: 'Overdue Invoice Table'}                                                            ,
+                { name: 'Current invoices', username: 'Current invoices'}                                                                      ,
+//                { name: 'Paid Invoice Table', username: 'Paid Invoice Table'}                                                                  ,
+                { name: 'company email address', username: 'company email address'}                                                            ,
+                { name: 'Business Address', username: 'Business Address'}                                                                      ,
+                { name: 'Logo', username: 'Logo'}                                                                                              ,
+                { name: 'Phone Number', username: 'Phone Number'}                                                                              ,
+                { name: 'Organisation ABN', username: 'Organisation ABN'}                                                                      ,
+                { name: 'Organisation ACN', username: 'Organisation ACN'}                                                                      ,
+                { name: 'Organisation Fax', username: 'Organisation Fax'}                                                                      ,
+                { name: 'Organisation Website', username: 'Organisation Website'}                                                              ,
+                { name: 'Organisation Business Name', username: 'Organisation Business Name'}                                                  ,
+                { name: 'Organisation Postal Address', username: 'Organisation Postal Address'}                                                ,
+                { name: 'Credit Card Payment Details', username: 'Credit Card Payment Details'}                                                ,
+                { name: 'Electronic Funds Transfer Details', username: 'Electronic Funds Transfer Details'}                                    ,
+                { name: 'Email details for remittance advice', username: 'Email details for remittance advice'}
+            ],
+            emptyQuery: true
+        });
+
+	</script>
+</body>
+</html>
+
