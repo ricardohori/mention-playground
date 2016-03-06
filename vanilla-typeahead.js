@@ -141,6 +141,7 @@ function getCoordinates(input, selectionStart, selectionEnd, debug) {
             top : box.top  + scrollTop  - clientTop,
             left: box.left + scrollLeft - clientLeft};
     }
+
     function getInputCSS(prop, isnumber){
         var val = document.defaultView.getComputedStyle(input, null).getPropertyValue(prop);
         return isnumber ? parseFloat(val) : val;
@@ -283,7 +284,6 @@ VanillaMention.prototype = {
         var position = getCoordinates(this.$element, this.findDelimiterIndex());
 
         var node = insertAfter(this.$menu, this.$element);
-        debugger;
         node.style.position = 'absolute';
         node.style.top = position.top + position.height + 'px';
         node.style.left = position.left + 'px';
@@ -308,6 +308,7 @@ VanillaMention.prototype = {
             return this.shown ? this.hide() : this;
         }
 
+//        This could be used to get remote data instead of using a source list of objects
 //        items = $.isFunction(this.source) ? this.source(this.query, $.proxy(this.process, this)) : this.source
         items = this.source;
 
@@ -345,15 +346,14 @@ VanillaMention.prototype = {
             var propertyValue = item[this.options.queryBy[i]];
             if (Boolean(propertyValue)) {
                 var lowerCaseValue = propertyValue.toLowerCase();
-                var matches = (this.query.toLowerCase()).match(new RegExp(this.options.delimiter + '\\w+', "g"));
+
+                var matches = (this.extractCurrentQuery(this.query, this.$element.selectionStart).toLowerCase()).match(new RegExp(this.options.delimiter + '\\w+', "g"));
 
                 if (!!matches) {
                     for (var j = 0; j < matches.length; j++) {
                         var match = (matches[j].substring(this.options.delimiter.length)).toLowerCase();
-                        var re = new RegExp(this.options.delimiter + lowerCaseValue, "g");
-                        var used = ((this.query.toLowerCase()).match(re));
 
-                        if (lowerCaseValue.indexOf(match) != -1 && used === null) {
+                        if (lowerCaseValue.indexOf(match) != -1) {
                             return true;
                         }
                     }
@@ -363,13 +363,20 @@ VanillaMention.prototype = {
     },
 
     extractCurrentQuery: function(query, caratPos) {
-        var i;
-        for (i = caratPos; i >= 0; i--) {
-            if (query[i] == this.options.delimiter) {
-                break;
+        var currentQuery = this.query;
+        var lastMatchIndex = this.query.lastIndexOf(">>");
+        if(lastMatchIndex > -1){
+            currentQuery = this.query.substring(lastMatchIndex + 2);
+        }else {
+            var i;
+            for (i = caratPos; i >= 0; i--) {
+                if (query[i] == this.options.delimiter) {
+                    break;
+                }
             }
+            currentQuery = query.substring(i, caratPos);
         }
-        return query.substring(i, caratPos);
+        return currentQuery;
     },
 
     sorter: function (items) {
@@ -411,10 +418,27 @@ VanillaMention.prototype = {
     },
 
     highlighter: function (item) {
-        var query = this.query.replace(/[\-\[\]{}()*+?.,\\\^$|#\s]/g, '\\$&');
-        return item.replace(new RegExp('(' + query + ')', 'ig'), function ($1, match) {
-            return '<strong>' + match + '</strong>'
+        var currentQuery = this.extractCurrentQuery(this.query, this.$element.selectionStart);
+        var queryTokens = currentQuery.replace(this.options.delimiter, '').split(' ');
+        queryTokens = filter(queryTokens, function(token){
+            return Boolean  (token.trim());
         });
+        if(queryTokens.length > 0) {
+            var query = '';
+            for(var i = 0 ; i < queryTokens.length ; i++){
+                if(Boolean(query)){
+                    query = query + '|' + queryTokens[i];
+                }else{
+                    query = queryTokens[i];
+                }
+            }
+
+            return item.replace(new RegExp('(' + query + ')', 'ig'), function ($1, match) {
+                return '<strong>' + match + '</strong>'
+            });
+        }else{
+            return item;
+        }
     },
 
     render: function (items) {
@@ -426,19 +450,14 @@ VanillaMention.prototype = {
 
             var _linkInnerHtml = '<div>';
 
-//            if (item.image) {
-//                _linkInnerHtml += '<img class="mention_image" src="' + item.image + '">';
-//            }
             if (item.name) {
-                _linkInnerHtml += '<b class="mention_name">' + item.name + '</b>';
+                var highlightedName = that.highlighter(item.name);
+                _linkInnerHtml += '<b class="mention_name">' + highlightedName + '</b>';
             }
-//            if (item.username) {
-//                _linkInnerHtml += '<span class="mention_username"> ' + that.options.delimiter + item.username + '</span>';
-//            }
-
             _linkInnerHtml += '</div>';
 
-            newItem.childNodes[0].innerHTML = that.highlighter(_linkInnerHtml).replace('<<', '');
+
+            newItem.childNodes[0].innerHTML = _linkInnerHtml;
             return newItem;
         });
 
@@ -459,7 +478,7 @@ VanillaMention.prototype = {
         active.className = active.className.replace('active', '');
         var next = active.nextElementSibling;
 
-        if (!next.length) {
+        if (!Boolean(next)) {
             next = this.$menu.childNodes[0];
         }
 
@@ -471,7 +490,7 @@ VanillaMention.prototype = {
         active.className = active.className.replace('active', '');
         var prev = active.previousElementSibling;
 
-        if (!prev.length) {
+        if (!Boolean(prev)) {
             prev = this.$menu.childNodes[this.$menu.childNodes.length -1];
         }
 
@@ -492,7 +511,7 @@ VanillaMention.prototype = {
     },
 
     eventSupported: function (eventName) {
-        var isSupported = eventName in this.$element;
+        var isSupported = 'on' + eventName in this.$element;
         if (!isSupported) {
             this.$element.setAttribute(eventName, 'return;');
             isSupported = typeof this.$element[eventName] === 'function';

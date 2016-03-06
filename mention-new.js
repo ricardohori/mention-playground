@@ -1,6 +1,6 @@
 /*global tinymce, jQuery */
 
-(function (tinymce, $) {
+(function ($) {
     'use strict';
 
     var AutoComplete = function (ed, options) {
@@ -8,7 +8,7 @@
 
         this.options = $.extend({}, {
             source: [],
-            delay: 0,
+            delay: 500,
             queryBy: 'name',
             items: 99999
         }, options);
@@ -288,10 +288,6 @@
                     $element.attr('data-' + key, val);
                 });
 
-                if(i === 0){
-                    $element.addClass("active");
-                }
-
                 result.push($element[0].outerHTML);
             });
 
@@ -355,7 +351,7 @@
                     !$.isArray(autoCompleteData.delimiter) ?
                         [autoCompleteData.delimiter] :
                         autoCompleteData.delimiter
-                    ) : ['@'];
+                ) : ['@'];
 
             ed.on('keypress', function (e) {
                 var text = getCurrentText(e);
@@ -406,4 +402,4 @@
 
     tinymce.PluginManager.add('mention', tinymce.plugins.Mention);
 
-}(tinymce, jQuery));
+}(jQuery));

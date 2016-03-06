@@ -3,14 +3,14 @@
 (function (tinymce, $) {
     'use strict';
 
-    var AutoCompleteInput = function (ed, options) {
+    var AutoComplete = function (ed, options) {
         this.editor = ed;
 
         this.options = $.extend({}, {
             source: [],
-            delay: 500,
+            delay: 0,
             queryBy: 'name',
-            items: 10
+            items: 99999
         }, options);
 
         this.matcher = this.options.matcher || this.matcher;
@@ -23,13 +23,14 @@
         this.hasFocus = true;
 
         this.renderInput();
-
         this.bindEvents();
     };
 
-    AutoCompleteInput.prototype = {
+    AutoComplete.prototype = {
 
-        constructor: AutoCompleteInput,
+        constructor: AutoComplete,
+
+//        Must be orverriden
 
         renderInput: function () {
             var rawHtml =  '<span id="autocomplete">' +
@@ -62,6 +63,87 @@
 
             $(this.editor.getWin()).off('scroll', this.rteScroll);
         },
+
+        lookup: function () {
+            this.query = $.trim($(this.editor.getBody()).find('#autocomplete-searchtext').text()).replace('\ufeff', '');
+
+            if (this.$dropdown === undefined) {
+                this.show();
+            }
+
+            clearTimeout(this.searchTimeout);
+            this.searchTimeout = setTimeout($.proxy(function () {
+                // Added delimiter parameter as last argument for backwards compatibility.
+                var items = $.isFunction(this.options.source) ? this.options.source(this.query, $.proxy(this.process, this), this.options.delimiter) : this.options.source;
+                if (items) {
+                    this.process(items);
+                }
+            }, this), this.options.delay);
+        },
+
+        show: function () {
+            var offset = this.editor.inline ? this.offsetInline() : this.offset();
+
+            this.$dropdown = $(this.renderDropdown())
+                .css({ 'top': offset.top, 'left': offset.left });
+
+            $('body').append(this.$dropdown);
+
+            this.$dropdown.on('click', $.proxy(this.autoCompleteClick, this));
+        },
+
+        select: function (item) {
+            this.editor.focus();
+            var selection = this.editor.dom.select('span#autocomplete')[0];
+            this.editor.dom.remove(selection);
+            this.editor.execCommand('mceInsertContent', false, this.insert(item));
+        },
+
+        cleanUp: function (rollback) {
+            this.unbindEvents();
+            this.hasFocus = false;
+
+            if (this.$dropdown !== undefined) {
+                this.$dropdown.remove();
+                delete this.$dropdown;
+            }
+
+            if (rollback) {
+                var text = this.query,
+                    $selection = $(this.editor.dom.select('span#autocomplete')),
+                    replacement = $('<p>' + this.options.delimiter + text + '</p>')[0].firstChild,
+                    focus = $(this.editor.selection.getNode()).offset().top === ($selection.offset().top + (($selection.outerHeight() - $selection.height()) / 2));
+
+                this.editor.dom.replace(replacement, $selection[0]);
+
+                if (focus) {
+                    this.editor.selection.select(replacement);
+                    this.editor.selection.collapse();
+                }
+            }
+        },
+
+        offset: function () {
+            var rtePosition = $(this.editor.getContainer()).offset(),
+                contentAreaPosition = $(this.editor.getContentAreaContainer()).position(),
+                nodePosition = $(this.editor.dom.select('span#autocomplete')).position();
+
+            return {
+                top: rtePosition.top + contentAreaPosition.top + nodePosition.top + $(this.editor.selection.getNode()).innerHeight() - $(this.editor.getDoc()).scrollTop() + 5,
+                left: rtePosition.left + contentAreaPosition.left + nodePosition.left
+            };
+        },
+
+        offsetInline: function () {
+            var nodePosition = $(this.editor.dom.select('span#autocomplete')).offset();
+
+            return {
+                top: nodePosition.top + $(this.editor.selection.getNode()).innerHeight() + 5,
+                left: nodePosition.left
+            };
+        },
+
+//        COMMON
 
         rteKeyUp: function (e) {
             switch (e.which || e.keyCode) {
@@ -153,23 +235,6 @@
             }
         },
 
-        lookup: function () {
-            this.query = $.trim($(this.editor.getBody()).find('#autocomplete-searchtext').text()).replace('\ufeff', '');
-
-            if (this.$dropdown === undefined) {
-                this.show();
-            }
-
-            clearTimeout(this.searchTimeout);
-            this.searchTimeout = setTimeout($.proxy(function () {
-                // Added delimiter parameter as last argument for backwards compatibility.
-                var items = $.isFunction(this.options.source) ? this.options.source(this.query, $.proxy(this.process, this), this.options.delimiter) : this.options.source;
-                if (items) {
-                    this.process(items);
-                }
-            }, this), this.options.delay);
-        },
-
         matcher: function (item) {
             return ~item[this.options.queryBy].toLowerCase().indexOf(this.query.toLowerCase());
         },
@@ -197,17 +262,6 @@
             return text.replace(new RegExp('(' + this.query.replace(/([.?*+^$[\]\\(){}|-])/g, '\\$1') + ')', 'ig'), function ($1, match) {
                 return '<strong>' + match + '</strong>';
             });
-        },
-
-        show: function () {
-            var offset = this.editor.inline ? this.offsetInline() : this.offset();
-
-            this.$dropdown = $(this.renderDropdown())
-                .css({ 'top': offset.top, 'left': offset.left });
-
-            $('body').append(this.$dropdown);
-
-            this.$dropdown.on('click', $.proxy(this.autoCompleteClick, this));
         },
 
         process: function (data) {
@@ -278,73 +332,44 @@
             this.$dropdown.find('li').removeClass('active').eq(index).addClass('active');
         },
 
-        select: function (item) {
-            this.editor.focus();
-            var selection = this.editor.dom.select('span#autocomplete')[0];
-            this.editor.dom.remove(selection);
-            this.editor.execCommand('mceInsertContent', false, this.insert(item));
-        },
-
         insert: function (item) {
             return '<span>' + item[this.options.queryBy] + '</span>&nbsp;';
-        },
-
-        cleanUp: function (rollback) {
-            this.unbindEvents();
-            this.hasFocus = false;
-
-            if (this.$dropdown !== undefined) {
-                this.$dropdown.remove();
-                delete this.$dropdown;
-            }
-
-            if (rollback) {
-                var text = this.query,
-                    $selection = $(this.editor.dom.select('span#autocomplete')),
-                    replacement = $('<p>' + this.options.delimiter + text + '</p>')[0].firstChild,
-                    focus = $(this.editor.selection.getNode()).offset().top === ($selection.offset().top + (($selection.outerHeight() - $selection.height()) / 2));
-
-                this.editor.dom.replace(replacement, $selection[0]);
-
-                if (focus) {
-                    this.editor.selection.select(replacement);
-                    this.editor.selection.collapse();
-                }
-            }
-        },
-
-        offset: function () {
-            var rtePosition = $(this.editor.getContainer()).offset(),
-                contentAreaPosition = $(this.editor.getContentAreaContainer()).position(),
-                nodePosition = $(this.editor.dom.select('span#autocomplete')).position();
-
-            return {
-                top: rtePosition.top + contentAreaPosition.top + nodePosition.top + $(this.editor.selection.getNode()).innerHeight() - $(this.editor.getDoc()).scrollTop() + 5,
-                left: rtePosition.left + contentAreaPosition.left + nodePosition.left
-            };
-        },
-
-        offsetInline: function () {
-            var nodePosition = $(this.editor.dom.select('span#autocomplete')).offset();
-
-            return {
-                top: nodePosition.top + $(this.editor.selection.getNode()).innerHeight() + 5,
-                left: nodePosition.left
-            };
         }
-
     };
 
     tinymce.create('tinymce.plugins.Mention', {
 
         init: function (ed) {
 
-            var autoComplete,
-                autoCompleteData = ed.getParam('mentions');
+            var autoComplete;
+            var autoCompleteData = ed.getParam('mentions');
 
             // If the delimiter is undefined set default value to ['@'].
             // If the delimiter is a string value convert it to an array. (backwards compatibility)
-            autoCompleteData.delimiter = (autoCompleteData.delimiter !== undefined) ? !$.isArray(autoCompleteData.delimiter) ? [autoCompleteData.delimiter] : autoCompleteData.delimiter : ['@'];
+            autoCompleteData.delimiter = (autoCompleteData.delimiter !== undefined) ?
+                (
+                    !$.isArray(autoCompleteData.delimiter) ?
+                        [autoCompleteData.delimiter] :
+                        autoCompleteData.delimiter
+                    ) : ['@'];
+
+            ed.on('keypress', function (e) {
+                var text = getCurrentText(e);
+                if(text.length >= autoCompleteData.delimiter[0].length) {
+                    var analyzedChars = getPreviousChars(text, autoCompleteData.delimiter[0].length);
+                    var delimiterIndex = $.inArray(analyzedChars, autoCompleteData.delimiter);
+
+                    if (delimiterIndex > -1 && prevCharIsSpace(text)) {
+                        if (autoComplete === undefined || (autoComplete.hasFocus !== undefined && !autoComplete.hasFocus)) {
+                            e.preventDefault();
+                            // Clone options object and set the used delimiter.
+                            autoComplete = new AutoComplete(ed, $.extend({}, autoCompleteData, {
+                                delimiter: autoCompleteData.delimiter[delimiterIndex]
+                            }));
+                        }
+                    }
+                }
+            });
 
             function prevCharIsSpace(text) {
                 if(text.length >= (autoCompleteData.delimiter[0].length + 1)){
@@ -364,23 +389,6 @@
                 var start = ed.selection.getRng(true).startOffset + 1;
                 return text.substr(start - length, length);
             }
-
-            ed.on('keypress', function (e) {
-                var text = getCurrentText(e);
-                if(text.length >= autoCompleteData.delimiter[0].length) {
-                    var analyzedChars = getPreviousChars(text, autoCompleteData.delimiter[0].length);
-                    var delimiterIndex = $.inArray(analyzedChars, autoCompleteData.delimiter);
-
-                    if (delimiterIndex > -1 && prevCharIsSpace(text)) {
-                        if (autoComplete === undefined || (autoComplete.hasFocus !== undefined && !autoComplete.hasFocus)) {
-                            e.preventDefault();
-                            // Clone options object and set the used delimiter.
-                            autoComplete = new AutoCompleteInput(ed, $.extend({}, autoCompleteData, { delimiter: autoCompleteData.delimiter[delimiterIndex] }));
-                        }
-                    }
-                }
-            });
-
         },
 
         getInfo: function () {
